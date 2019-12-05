@@ -6,31 +6,48 @@ import Audio
 
 class Filter ():
     # Interface to be defined
-    def __init__ (self, audio, attenuation, filter_type):
-        if type(filter_type) is not str:
-            print('ERROR: Filter type must be eihter \'lowpass\', \'highpass\', \'bandpass\' or \'bandstop\'.')
-            exit (1)
+    def __init__ (self, low_f, high_f, gain, audio=None):
         self.audio = audio
         self.order = None
         self.wn = None
         self.b_num = None
         self.a_den = None
-        self.filter_type = filter_type
-        self.attenuation = attenuation
+        self.low_f = low_f
+        self.high_f = high_f
+        self.gain = gain #linear
+        self.filter_type = 'bandpass'
+        self.pass_atten = 0.5 #dB
+        self.stop_atten = 40 #dB
+        self.create_filter(self.audio.get_sampling_rate())
 
-    def calculate_order (self, wp, ws, gpass, gstop, fs=None):
+    def create_filter (self, fs=None):
         if fs is None:
-            fs = self.audio.get_sampling_rate()
+            fs = 44100
         self.fs = fs
-        self.order, self.wn = signal.cheb2ord(wp, ws, gpass, gstop, False, fs)
-
-    def create_filter (self):
-        if self.order is None or self.wn is None:
-            print ('ERROR: First select your filter order.')
-            exit (1)
+        width = self.high_f - self.low_f
+        f_pass = width/2
+        f_stop = f_pass + pow(width/100,2) + 300
+        self.fn = [self.low_f, self.high_f]
+        self.order, self.fc = signal.cheb1ord(f_pass, f_stop, self.pass_atten, self.stop_atten, fs=self.fs)
         # b is numerator, a is denominator
-        self.b_num, self.a_den = signal.cheby2(self.order, self.attenuation, self.wn, btype=self.filter_type, fs=self.fs)
+        self.b_num, self.a_den = signal.cheby1(self.order, self.pass_atten, self.fn, btype=self.filter_type, fs=self.fs)
+        self.b_num = [i*self.gain for i in self.b_num]
     
+    def plot_filter_linear (self):
+        w, h = signal.freqz(self.b_num, self.a_den, worN=100000, fs=self.fs)
+        plt.xlim(0,self.fs/2)
+        plt.plot (w, np.abs(h))
+        plt.grid(which='both', axis='both')
+        plt.show()
+
+    def plot_filter_bode (self):
+        w, h = signal.freqz(self.b_num, self.a_den, worN=100000, fs=self.fs)
+        h_dB = 20 * np.log10(np.abs(h))
+        plt.xlim(0,self.fs/2)
+        plt.plot (w, h_dB)
+        plt.grid(which='both', axis='both')
+        plt.show()
+
     def apply_filter (self):
         if self.a_den is None or self.b_num is None:
             print ('ERROR: Please create your filter before applying to audio signal.')
@@ -57,7 +74,12 @@ class Filter_Bank ():
             self.parallel_results.append(each_filter.get_new_audio())
 
     def apply_in_cascade_for_range (self, range):
-        # Still need to think how to implement this
-        # Maybe a good solution to keep in Filter class, it's frequencies
-        # But I already keep wn, think about this later
+        for each_filter in self.list_of_filters:
+            each_filter.apply_filter()
+
         print ('Applyin in cascade.')
+
+if __name__ == "__main__":
+    my_filter = Filter(16,60,1)
+    my_filter.create_filter()
+    my_filter.plot_filter_bode()
