@@ -120,6 +120,11 @@ class Filter ():
         plt.grid(True)
         plt.plot(np.real(zd), np.imag(zd), 'or')
         plt.plot(np.real(pd), np.imag(pd), 'xr')
+        x = np.linspace(-2,2,400)
+        y = np.linspace(-2,2,400)
+        x,y = np.meshgrid(x,y)
+        z = x*x+y*y
+        plt.contour(x,y,z,[1])
         plt.subplot(132)
         plt.xlabel('Imaginary')
         plt.ylabel('Real')
