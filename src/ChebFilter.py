@@ -2,7 +2,7 @@ from scipy import signal
 import math
 import numpy as np
 from matplotlib import pyplot as plt
-import Audio
+from Audio import Audio
 
 class Filter ():
     # Interface to be defined
@@ -12,13 +12,20 @@ class Filter ():
         self.wn = None
         self.b_num = None
         self.a_den = None
+        self.b_num_dig = None
+        self.a_den_dig = None
         self.low_f = low_f
         self.high_f = high_f
+        self.high_f_Hz = high_f
+        self.low_f_Hz = low_f
         self.gain = gain #linear
         self.filter_type = 'bandpass'
         self.pass_atten = 0.5 #dB
         self.stop_atten = 40 #dB
+        self.f_stop = None
+        self.width = None
         self.fs = None
+        self.sampling_period = None
         self.number_of_samples = None
         self.create_analog_filters()
         self.create_digital_filter()
@@ -29,22 +36,29 @@ class Filter ():
         if self.audio is None:
             self.fs = 44100
             self.number_of_samples = 364917
+        else:
+            self.fs = self.audio.get_sampling_rate()
+            self.number_of_samples = self.audio.get_number_of_samples()
+        self.sampling_period = 1/self.fs
         width = self.high_f - self.low_f
         f_pass = width/2
         if width > 2*math.pi*1000:
             f_stop = f_pass + width/2
         else:
             f_stop = f_pass + 2000
+        self.f_stop = f_stop/(2*math.pi)
+        self.width = width/(2*math.pi)
         self.fn = [self.low_f, self.high_f]
         tangent = np.tan([wd/(2*self.fs) for wd in self.fn])
         wrapped_corner_freq = [2*self.fs*f for f in tangent]
         self.order, self.fc = signal.cheb1ord(f_pass, f_stop, self.pass_atten, self.stop_atten, fs=self.fs)
         self.Pb_num, self.Pa_den = signal.cheby1(self.order, self.pass_atten, wrapped_corner_freq, btype=self.filter_type, analog=True)
         self.b_num, self.a_den = signal.cheby1(self.order, self.pass_atten, self.fn, btype=self.filter_type, analog=True)
-        self.b_num = [i*self.gain for i in self.b_num]
+        self.Pb_num = [i*self.gain for i in self.Pb_num]
 
     def create_digital_filter (self):
         self.b_num_dig, self.a_den_dig = signal.bilinear(self.Pb_num, self.Pa_den, self.fs)
+        return (self.b_num_dig, self.a_den_dig)
 
     def plot_filters (self, bode=False):
         if bode:
@@ -53,30 +67,32 @@ class Filter ():
             Pwa, Pha = signal.freqs(self.Pb_num, self.Pa_den, worN=self.number_of_samples)
             wa = [w/(2*math.pi) for w in wa]
             Pwa = [w/(2*math.pi) for w in Pwa]
+            plt.figure(figsize=(7680/300, 4320/300), dpi=300)
             plt.subplot(231)
             plt.semilogx (wa, 20*np.log10(np.abs(ha)), 'b')
-            plt.xlim(10,self.fs)
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(234)
             plt.semilogx (wa, np.angle(ha), 'b')
-            plt.xlim(10,self.fs)
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(232)
             plt.semilogx (wd, 20*np.log10(np.abs(hd)), 'r')
-            plt.xlim(10,self.fs)
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(235)
-            plt.semilogx (wa, np.angle(hd), 'r')
-            plt.xlim(10,self.fs)
+            plt.semilogx (wd, np.angle(hd), 'r')
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(233)
             plt.semilogx (Pwa, 20*np.log10(np.abs(Pha)), 'g')
-            plt.xlim(10,self.fs)
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(236)
             plt.semilogx (wa, np.angle(Pha), 'g')
-            plt.xlim(10,self.fs)
+            plt.xlim(10,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
+            plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'lin.png')
             plt.show()
         else:
             wd, hd = signal.freqz(self.b_num_dig, self.a_den_dig, worN=self.number_of_samples, fs=self.fs)
@@ -84,40 +100,45 @@ class Filter ():
             Pwa, Pha = signal.freqs(self.Pb_num, self.Pa_den, worN=self.number_of_samples)
             wa = [w/(2*math.pi) for w in wa]
             Pwa = [w/(2*math.pi) for w in Pwa]
+            plt.figure(figsize=(7680/300, 4320/300), dpi=300)
             plt.subplot(231)
             plt.plot (wa, np.abs(ha), 'b')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(234)
             plt.plot(wa, np.angle(ha), 'b')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(232)
             plt.plot (wd, np.abs(hd), 'r')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(235)
             plt.plot (wd, np.angle(hd), 'r')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(233)
             plt.plot (Pwa, np.abs(Pha), 'g')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
             plt.subplot(236)
             plt.plot (Pwa, np.angle(Pha), 'g')
-            plt.xlim(0,self.fs)
+            plt.xlim(0,self.f_stop + self.width/2)
             plt.grid(which='both', axis='both')
+            plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'bode.png')
             plt.show()
 
     def plot_zp (self):
         zd,pd,kd = signal.tf2zpk(self.b_num_dig, self.a_den_dig)
         za,pa,ka = signal.tf2zpk(self.b_num, self.a_den)
         Pza, Ppa, Pka = signal.tf2zpk(self.Pb_num, self.Pa_den)
+        plt.figure(figsize=(7680/300, 4320/300), dpi=300)
         plt.subplot(131)
         plt.xlabel('Imaginary')
         plt.ylabel('Real')
         plt.grid(True)
+        plt.xlim(-1,1)
+        plt.ylim(-1,1)
         plt.plot(np.real(zd), np.imag(zd), 'or')
         plt.plot(np.real(pd), np.imag(pd), 'xr')
         x = np.linspace(-2,2,400)
@@ -137,17 +158,51 @@ class Filter ():
         plt.grid(True)
         plt.plot(np.real(Pza), np.imag(Pza), 'og')
         plt.plot(np.real(Ppa), np.imag(Ppa), 'xg')
+        plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'zp.png')
         plt.show()
 
-    #def print_transfer_func (self):
+    def print_transfer_func (self):
+        i = 0
+        last_num = len(self.b_num)
+        
+        print ('Num: ', end='')
+        for num in self.b_num:
+            if i == last_num-1:
+                print (str(num) + 's^' + str(i))
+            else:    
+                print (str(num) + 's^' + str(i) + ' +', end=' ')
+                i+=1
+        
+        last_den = len(self.a_den)
+        print ('Den: ', end='')
+        i = 0
+        for den in self.a_den:
+            if i == last_den-1:
+                print (str(den) + 's^' + str(i))
+            else:
+                print (str(den) + 's^' + str(i) + ' +', end=' ')
+                i+=1
+        
+    def plot_imp_resp (self):
+        td, yd = signal.dimpulse((self.b_num_dig, self.a_den_dig, 1/self.sampling_period), n=self.number_of_samples)
+        ta, ya = signal.impulse((self.b_num, self.a_den), N=self.number_of_samples)
+        Pta, Pya = signal.impulse((self.Pb_num, self.Pa_den), N=self.number_of_samples)
+        plt.figure(figsize=(7680/300, 4320/300), dpi=300)
+        plt.subplot(311)
+        plt.plot(td, np.squeeze(yd), 'r')
+        plt.subplot(312)
+        plt.plot(ta, ya, 'b')
+        plt.subplot(313)
+        plt.plot(Pta, Pya, 'g')
+        plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'imp_resp.png')
+        plt.show()
 
-    #def plot_imp_resp (self):
-
-    def apply_filter (self):
-        if self.a_den is None or self.b_num is None:
+    def apply_filter (self, audio):
+        if self.a_den_dig is None or self.b_num_dig is None:
             print ('ERROR: Please create your filter before applying to audio signal.')
             exit (1)
-        self.result = signal.lfilter(self.b_num, self.a_den, self.audio.get_data())
+        self.result= signal.lfilter(self.b_num_dig, self.a_den_dig, audio.get_data())
+        return self.result
 
     def get_new_audio (self):
         if self.result is not None:
@@ -163,17 +218,22 @@ class Filter_Bank ():
         self.list_of_filters = list_of_filters
         self.parallel_results = []
 
-    def apply_all_in_parallel (self):
-        for each_filter in self.list_of_filters:
-            each_filter.apply_filter()
-            self.parallel_results.append(each_filter.get_new_audio())
+    def apply_and_sum (self, audio):
+        sampling_rate = audio.get_sampling_rate()
+        data = audio.get_data()
+        my_new_audio = [0]*audio.get_number_of_samples()
+        list_of_filtered_audio = []
+        for fltr in self.list_of_filters:
+            filtered_audio = fltr.apply_filter(audio)
+            list_of_filtered_audio.append(filtered_audio)
+        for each_audio in list_of_filtered_audio:
+            my_new_audio += each_audio
+        return my_new_audio
 
-    def apply_in_cascade_for_range (self, range):
-        for each_filter in self.list_of_filters:
-            each_filter.apply_filter()
-
-        print ('Applyin in cascade.')
-
-if __name__ == "__main__":
-    my_filter = Filter(16,60,1)
-    my_filter.plot_zp()
+    def dump_all_plots (self):
+        for fltr in self.list_of_filters:
+            fltr.plot_filters()
+            fltr.plot_filters(True)
+            fltr.plot_zp()
+            fltr.print_transfer_func()
+            fltr.plot_imp_resp()
