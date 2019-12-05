@@ -57,10 +57,11 @@ class Audio ():
         return (self.w_axis, self.fft_of_data)
 
     def print_audio(self, name):
+        self.normalize_data()
         print ('Saving audio waveform.')
         sampling_period = 0
         time_list = []
-        plt.figure(figsize=(7680/300, 4320/300), dpi=300)
+        plt.figure(figsize=(1920/300, 1080/300), dpi=300)
         plt.subplot(111)
         for sample in self.data:
             time_list.append(sampling_period)
@@ -73,7 +74,7 @@ class Audio ():
 
     def print_fft(self, name):
         self.calculate_fft()
-        plt.figure(figsize=(7680/300, 4320/300), dpi=300)
+        plt.figure(figsize=(1920/300, 1080/300), dpi=300)
         new_w_axis = fftpack.fftshift(self.w_axis)
         print ('Saving fft plot.')
         plt.subplot(211)
