@@ -210,10 +210,11 @@ class Filter ():
                     i+=1
         
     def plot_imp_resp (self):
-        td, yd = signal.dimpulse((self.b_num_dig, self.a_den_dig, 1/self.sampling_period), n=self.number_of_samples)
+        td, yd = signal.dimpulse((self.b_num_dig, self.a_den_dig, self.sampling_period), n=self.number_of_samples)
         plt.figure(figsize=(1920/300, 1080/300), dpi=300)
+        plt.xlim(0,0.5/pow(self.high_f_Hz,0.5))
         plt.step(td, np.squeeze(yd), 'r')
-        plt.xlim(0,1E+9)
+        plt.grid(True)
         plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'imp_resp.png')
         plt.close()
         
