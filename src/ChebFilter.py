@@ -104,7 +104,6 @@ class Filter ():
             plt.xlabel('Frequency [Hz]')
             plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
-            plt.legend()
             plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'bode.png')
             plt.close()
             
