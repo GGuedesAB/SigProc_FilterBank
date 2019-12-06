@@ -41,6 +41,10 @@ if __name__ == "__main__":
     try:
         dump_plots = input('Do you want to see filter and waveform plots?(Y/N) ')
         if dump_plots == 'Y' or dump_plots == 'y':
+            print ('**Curve labels**')
+            print ('RED: Digital filter.')
+            print ('BLUE: Analog filter.')
+            print ('GREEN: Warped frequencies analog filter.')
             my_audio.print_audio('Blind_intro')
             new_audio.print_audio('new_Blind_intro')
             my_audio.print_fft('Blind_intro_fft')

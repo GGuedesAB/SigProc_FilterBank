@@ -46,7 +46,7 @@ class Filter ():
             f_stop = f_pass + width/2
         else:
             f_stop = f_pass + 2000
-        self.f_stop = f_stop/(2*math.pi)
+        self.f_stop = self.high_f_Hz
         self.width = width/(2*math.pi)
         self.fn = [self.low_f, self.high_f]
         tangent = np.tan([wd/(2*self.fs) for wd in self.fn])
@@ -67,44 +67,46 @@ class Filter ():
             Pwa, Pha = signal.freqs(self.Pb_num, self.Pa_den, worN=self.number_of_samples)
             wa = [w/(2*math.pi) for w in wa]
             Pwa = [w/(2*math.pi) for w in Pwa]
-            plt.figure(figsize=(1920/300, 1080/300), dpi=300)
+            plt.figure(figsize=(5760/300, 3240/300), dpi=300)
             plt.subplot(231)
             plt.semilogx (wa, 20*np.log10(np.abs(ha)), 'b')
             plt.ylabel('Mag [dB]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(234)
             plt.semilogx (wa, np.angle(ha), 'b')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(232)
             plt.semilogx (wd, 20*np.log10(np.abs(hd)), 'r')
             plt.ylabel('Mag [dB]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(235)
             plt.semilogx (wd, np.angle(hd), 'r')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(233)
             plt.semilogx (Pwa, 20*np.log10(np.abs(Pha)), 'g')
             plt.ylabel('Mag [dB]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(236)
             plt.semilogx (wa, np.angle(Pha), 'g')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0.1,self.f_stop + self.width/2)
+            plt.xlim(0.1,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
+            plt.legend()
             plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'bode.png')
+            plt.close()
             
         else:
             wd, hd = signal.freqz(self.b_num_dig, self.a_den_dig, worN=self.number_of_samples, fs=self.fs)
@@ -112,51 +114,51 @@ class Filter ():
             Pwa, Pha = signal.freqs(self.Pb_num, self.Pa_den, worN=self.number_of_samples)
             wa = [w/(2*math.pi) for w in wa]
             Pwa = [w/(2*math.pi) for w in Pwa]
-            plt.figure(figsize=(1920/300, 1080/300), dpi=300)
+            plt.figure(figsize=(5760/300, 3240/300), dpi=300)
             plt.subplot(231)
             plt.plot (wa, np.abs(ha), 'b')
             plt.ylabel('Gain')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(234)
             plt.plot(wa, np.angle(ha), 'b')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(232)
             plt.plot (wd, np.abs(hd), 'r')
             plt.ylabel('Gain')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(235)
             plt.plot (wd, np.angle(hd), 'r')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(233)
             plt.plot (Pwa, np.abs(Pha), 'g')
             plt.ylabel('Gain')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.subplot(236)
             plt.plot (Pwa, np.angle(Pha), 'g')
             plt.ylabel('Angle [rad]')
             plt.xlabel('Frequency [Hz]')
-            plt.xlim(0,self.f_stop + self.width/2)
+            plt.xlim(0,self.f_stop + self.width)
             plt.grid(which='both', axis='both')
             plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'lin.png')
-            
+            plt.close()
 
     def plot_zp (self):
         zd,pd,kd = signal.tf2zpk(self.b_num_dig, self.a_den_dig)
         za,pa,ka = signal.tf2zpk(self.b_num, self.a_den)
         Pza, Ppa, Pka = signal.tf2zpk(self.Pb_num, self.Pa_den)
-        plt.figure(figsize=(1920/300, 1080/300), dpi=300)
+        plt.figure(figsize=(5760/300, 3240/300), dpi=300)
         plt.subplot(131)
         plt.xlabel('Imaginary')
         plt.ylabel('Real')
@@ -183,12 +185,12 @@ class Filter ():
         plt.plot(np.real(Pza), np.imag(Pza), 'og')
         plt.plot(np.real(Ppa), np.imag(Ppa), 'xg')
         plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'zp.png')
-        
+        plt.close()        
 
     def print_transfer_func (self):
         i = 0
         last_num = len(self.b_num)
-        with open (str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'transfer_func.png', 'w+') as file:
+        with open (str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'transfer_func.txt', 'w+') as file:
             file.write ('Num: ')
             for num in self.b_num:
                 if i == last_num-1:
@@ -209,16 +211,11 @@ class Filter ():
         
     def plot_imp_resp (self):
         td, yd = signal.dimpulse((self.b_num_dig, self.a_den_dig, 1/self.sampling_period), n=self.number_of_samples)
-        ta, ya = signal.impulse((self.b_num, self.a_den), N=self.number_of_samples)
-        Pta, Pya = signal.impulse((self.Pb_num, self.Pa_den), N=self.number_of_samples)
         plt.figure(figsize=(1920/300, 1080/300), dpi=300)
-        plt.subplot(311)
-        plt.plot(td, np.squeeze(yd), 'r')
-        plt.subplot(312)
-        plt.plot(ta, ya, 'b')
-        plt.subplot(313)
-        plt.plot(Pta, Pya, 'g')
+        plt.step(td, np.squeeze(yd), 'r')
+        plt.xlim(0,1E+9)
         plt.savefig(str(self.low_f_Hz) + '-' + str(self.high_f_Hz) + 'imp_resp.png')
+        plt.close()
         
 
     def apply_filter (self, audio):

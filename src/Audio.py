@@ -71,6 +71,7 @@ class Audio ():
         plt.ylabel('Intensidade')
         plt.savefig(name+'.png')
         print ('Finished saving audio waveform.')
+        plt.close()
 
     def print_fft(self, name):
         self.calculate_fft()
@@ -92,6 +93,7 @@ class Audio ():
         plt.ylabel('Angle [°]')
         plt.savefig(name+'.png')
         print ('Finished saving fft plot.')
+        plt.close()
 
 class Gain ():
     def __init__ (self, gain):
